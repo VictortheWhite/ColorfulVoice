@@ -1,2 +1,1 @@
-# ColorfulVoice
-This is a Android app based on Java. To transfer voice into Colourful Images.
+This is an Android application, named Colorful Voice, which generate color for voice.
