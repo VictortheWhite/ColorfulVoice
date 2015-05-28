@@ -1,11 +1,11 @@
 # ACTIVITY 0
+ This activity is used to welcome the users
 
-
-# ACTIVITY 1 
+# ACTIVITY 1
 	StartWindow & Recording Window
 		This window is the first Window while the app starts and the window that records the user's voice once the record button is clicked
 * A circle to be cliked on to start recording (STAYS IN THE SAME WINDOW)
-* Images that used to beatify the whole scene 
+* Images that used to beatify the whole scene
   * Color changes (randomly or according to the voice of the user)
   * Some bubles or some sorts of effects
 * The voice should be recorded once started
@@ -28,17 +28,15 @@
 		This window is used to choose the way the images unfolds
  *	Several blocks to show different shapes of the final images
  *  Choose one and move on to the next Activity
- 
-# ACTIVITY 3 
+
+# ACTIVITY 3
 	Show Picture Window
 		This window is used to show the final images transfered from the voice user inputs in
- 
+
  * A button is needed to return to the first Activity
  * The picture may be saved
-	
-	
+
+
 # EXIT POLICY
 	Ask them to confirm their Exiting.
  * If something haven't been saved or in Processing, ask whether to save or continue
-	
-	
