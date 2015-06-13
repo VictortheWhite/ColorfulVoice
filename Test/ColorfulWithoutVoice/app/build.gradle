@@ -6,8 +6,8 @@ android {
 
     defaultConfig {
         applicationId "com.example.victor.colorfulwithoutvoice"
-        minSdkVersion 15
-        targetSdkVersion 22
+        minSdkVersion 7
+        //targetSdkVersion 22
         versionCode 1
         versionName "1.0"
     }
