@@ -9,13 +9,19 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import android.annotation.TargetApi;
 import android.media.AudioFormat;
 
 import android.media.AudioRecord;
-import android.os.Build;
+
+import org.jtransforms.fft.DoubleFFT_1D;
+
 
 public class AudioRecordFunc {
+//    static {
+//        System.loadLibrary("FFT");
+ //   }
+    //public native double processSampleData(byte[] sample,int sampleRate);
+    private static int FRAMES_PER_BUFFER;
     private int bufferSizeInBytes = 0;
     private String AudioName = "";
     private String NewAudioName = "";
@@ -23,6 +29,12 @@ public class AudioRecordFunc {
     private boolean isRecord = false;
     private static AudioRecordFunc Instance;
     private AudioRecordFunc(){  }
+    public double [] volume;
+    public double [] sampledoublebuffer;
+    private static int count;
+    Object mLock = new Object();
+    private DoubleFFT_1D fft;
+
     public synchronized static AudioRecordFunc getInstance(){
 
         if (Instance == null)
@@ -43,9 +55,19 @@ public class AudioRecordFunc {
                 createAudioRecord();
             }
 
-            audioRecord.startRecording();
+            //audioRecord.startRecording();
             isRecord = true;
-            new Thread(new AudioRecordThread()).start();
+
+           // new Thread(new AudioRecordThread()).start();
+            new Thread(new Runnable(){
+                public void run(){
+
+                    audioRecord.startRecording();
+                    processRecord();
+                }
+
+            }).start();
+           // processRecord();
             System.out.println("Start Record and File Finish\n");
             return ErrorCode.SUCCESS;
         }
@@ -69,34 +91,121 @@ public class AudioRecordFunc {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.CUPCAKE)
     private void createAudioRecord(){
         System.out.println("Create AudioRecording");
+
         AudioName = AudioFileFunc.getRawPath();
         NewAudioName = AudioFileFunc.getWavePath();
 
         bufferSizeInBytes = AudioRecord.getMinBufferSize(AudioFileFunc.AUDIO_SAMPLE_RATE,
                 AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
-
+        FRAMES_PER_BUFFER = bufferSizeInBytes;
+        sampledoublebuffer = new double[FRAMES_PER_BUFFER];
+        volume = new double[bufferSizeInBytes];
+        fft = new DoubleFFT_1D(FRAMES_PER_BUFFER);
         audioRecord = new AudioRecord(AudioFileFunc.AUDIO_INPUT, AudioFileFunc.AUDIO_SAMPLE_RATE,
                 AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, bufferSizeInBytes);
         System.out.println("Create AudioRecording finish");
     }
 
-    class AudioRecordThread implements Runnable {
+  /*  class AudioRecordThread implements Runnable {
         @Override
         public void run() {
             writeDataToFile();
             copyWaveFile(AudioName,NewAudioName);
         }
-    }
+    }*/
     //Processing Here
 
     private void processRecord(){
+        int maxv=0,maxf=0;
+        byte[] buffer = new byte[bufferSizeInBytes];
+        short[] sampleshortbuffer = new short[bufferSizeInBytes];
+        //short[] sampleshortbuffer = new short[bufferSizeInBytes/2];
+        FileOutputStream fOut = null;
+        try{
+            File file = new File(AudioName);
+            if (file.exists()){
+                file.delete();
+            }
+            fOut = new FileOutputStream(file);
+        }catch (Exception err){
+            err.printStackTrace();
+        }
+        int cc = 0;
+        while (isRecord) {
+            //r是实际读取的数据长度，一般而言r会小于buffersize
+
+            int r = audioRecord.read(buffer, 0, bufferSizeInBytes);
+            //if (cc%2 == 1) {
+                //System.out.print("We are in cc.....\n" + String.valueOf(buffer[cc]) + " " + String.valueOf(buffer[cc+1]));
+                sampleshortbuffer[cc] = buffer[cc];
+                //sampleshortbuffer[cc/2] = (short) (sampleshortbuffer[cc-1] << 8);
+                //sampleshortbuffer[cc/2] = (short) (sampleshortbuffer[cc] + buffer[cc]);
+                System.out.print(" " + String.valueOf(sampleshortbuffer[cc]) + "\n");
+                long v = 0;
+                // 将 buffer 内容取出，进行平方和运算
+                for (int i = 0; i < sampleshortbuffer.length; i++) {
+                    v += sampleshortbuffer[i] * sampleshortbuffer[i];
+                }
+                // 平方和除以数据总长度，得到音量大小。
+                double mean = v / (double) r;
+                convertToDouble(sampleshortbuffer, sampledoublebuffer);
+                fft.realForward(sampledoublebuffer);
+                if (count < bufferSizeInBytes) {
+                    volume[count] = 10 * Math.log10(mean);
+                    System.out.println("volume: " + String.valueOf(volume[count]) + " frequency:" + String.valueOf(sampledoublebuffer[count]) + " " + String.valueOf(count) + "\n");
+                    count++;
+                }
+           // }
+
+            if (AudioRecord.ERROR_INVALID_OPERATION != r && fOut!=null) {
+                try {
+                    fOut.write(buffer);
+                } catch (IOException err) {
+                    err.printStackTrace();
+                }
+            }
+            cc++;
+            //writeDataToFile(r,buffer, fOut);
+            /*if (count < bufferSizeInBytes) {
+                volume[count] = 10 * Math.log10(mean);
+                System.out.println("volume: "+String.valueOf( volume[count]) + " frequency:" + String.valueOf(sampledoublebuffer[count])+" ");
+                count++;
+            }*/
+            // 大概一秒十次
+            /* synchronized (mLock) {
+                try {
+                    mLock.wait(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }*/
+        }
+        copyWaveFile(AudioName,NewAudioName);
 
     }
     //Processing Here
+    private void convertToDouble(short[] input, double[] output){
+        double scale = 1 / 32768.0;
+        for(int i = 0; i < input.length; i++){
+            output[i] = input[i] * scale;
+        }
+    }
 
+    private void writeDataToFile(int readsize, byte [] audioData, FileOutputStream fOut){
+            System.out.print("Write Data To File!!!!!!!!\n");
+            if (AudioRecord.ERROR_INVALID_OPERATION != readsize && fOut!=null) {
+                try {
+                    fOut.write(audioData);
+                } catch (IOException err) {
+                    err.printStackTrace();
+                }
+            }
+
+    }
+
+    /*
     private void writeDataToFile(){
         byte[] audioData = new byte[bufferSizeInBytes];
         FileOutputStream fOut = null;
@@ -121,7 +230,7 @@ public class AudioRecordFunc {
             }
         }
     }
-
+*/
     private void copyWaveFile(String inFilename, String outFilename) {
         FileInputStream in = null;
         FileOutputStream out = null;
@@ -131,6 +240,7 @@ public class AudioRecordFunc {
         int channels = 2;
         long byteRate = 16 * AudioFileFunc.AUDIO_SAMPLE_RATE * channels / 8;
         byte[] data = new byte[bufferSizeInBytes];
+        System.out.print("Copy Wave To File!!!!!\n");
         try {
             in = new FileInputStream(inFilename);
             out = new FileOutputStream(outFilename);

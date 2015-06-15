@@ -12,18 +12,22 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-//import android.R;
+import org.jtransforms.fft.DoubleFFT_1D;
 
 
 public class MainActivity extends Activity {
 
     private final static int FLAG_WAV = 0;
+    //private final static int FRAMES_PER_BUFFER = 2048;
+    //private static final int BYTES_PER_SAMPLE = 16;
     private int State = -1;
     private Button Record;
     private Button stop;
     private TextView Text;
     private Handler uiHandler;
     private Thread uiThread;
+
+    private DoubleFFT_1D fft;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

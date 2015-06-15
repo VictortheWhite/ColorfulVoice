@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/whatever">
+    <!--图片1-->
+
+    <item>
+        <shape
+            android:shape="oval"
+            android:id="@+id/CircleColor">
+            <corners android:radius="100dp"/>
+            <solid android:color="#ffffffff"/>
+            <size android:width="200dp" android:height="200dp"/>
+        </shape>
+    </item>
+
+
+    <item
+        android:drawable="@drawable/pause"
+        android:left="10.0dip"
+        android:top="18.0dip"
+        android:right="25.0dip"
+        android:bottom="35.0dip" />
+</layer-list>
