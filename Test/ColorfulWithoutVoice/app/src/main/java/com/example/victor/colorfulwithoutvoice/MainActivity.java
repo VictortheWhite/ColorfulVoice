@@ -3,7 +3,6 @@ package com.example.victor.colorfulwithoutvoice;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import org.jtransforms.fft.DoubleFFT_1D;
 
 import android.os.Bundle;
 import android.view.Menu;
@@ -24,6 +23,7 @@ public class MainActivity extends Activity {
     private final int RecordingMSecs=120000;
     private static int State=-1;
     private final static int FLAG_WAV = 0;
+    public AudioRecordFunc Recorder;
 
 
     static int i;
@@ -107,9 +107,11 @@ public class MainActivity extends Activity {
         Intent recordActivityIntent=new Intent();
         recordActivityIntent.setClass(MainActivity.this,ShowPictureActivity.class);
         Bundle newBundle=new Bundle();
-        int[] shitArray=new int[]{1,2,3,4,5,6};
-        newBundle.putIntArray("shitString",shitArray);
-        newBundle.putString("shit","shitshitshitshit");
+        newBundle.putDoubleArray("Volume",Recorder.volume);
+        newBundle.putByteArray("Green",Recorder.Green);
+        newBundle.putByteArray("Blue",Recorder.Blue);
+        newBundle.putInt("Count",Recorder.count);
+
         recordActivityIntent.putExtras(newBundle);
         startActivity(recordActivityIntent);
     }
@@ -123,16 +125,17 @@ public class MainActivity extends Activity {
         if (Flag == FLAG_WAV)
         {
             System.out.println("FLAG_WAVing!!!");
-            AudioRecordFunc Record_1 = AudioRecordFunc.getInstance();
-            Result = Record_1.startRecordAndFile();
+            Recorder = AudioRecordFunc.getInstance();
+            Result = Recorder.startRecordAndFile();
+
         }
         System.out.println("Now out of FLAG_WAVing!!!");
-        /*
+
         if(Result == ErrorCode.SUCCESS){
-            uiThread = new Thread();
-            new Thread(uiThread).start();
+            //uiThread = new Thread();
+            //new Thread(uiThread).start();
             State = Flag;
-        }else{
+        }/*else{
             Message msg = new Message();
             Bundle b = new Bundle();// 存放数据
             b.putInt("cmd",CMD_RECORDFAIL);
@@ -145,11 +148,11 @@ public class MainActivity extends Activity {
     private void stopRecording(){
         if(State != -1){
             if (State == FLAG_WAV){
-                AudioRecordFunc Record_1 = AudioRecordFunc.getInstance();
-                Record_1.stopRecordAndFile();
+                Recorder = AudioRecordFunc.getInstance();
+                Recorder.stopRecordAndFile();
             }
-            /*
-            if(uiThread != null){
+
+            /*if(uiThread != null){
                 //uiThread.stopThread();
                 uiThread = null;
             }
@@ -160,11 +163,10 @@ public class MainActivity extends Activity {
             b.putInt("cmd",CMD_STOP);
             b.putInt("msg", State);
             msg.setData(b);
-            uiHandler.sendMessageDelayed(msg,1000); // 向Handler发送消息,更新UI
-            State = -1;*/
+            uiHandler.sendMessageDelayed(msg,1000); // 向Handler发送消息,更新UI*/
+            State = -1;
         }
     }
-
 
 
 }

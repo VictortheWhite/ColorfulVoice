@@ -34,6 +34,9 @@ public class AudioRecordFunc {
     public static int count;
     Object mLock = new Object();
     private DoubleFFT_1D fft;
+    private byte [] buffer;
+    public byte [] Green;
+    public byte [] Blue;
 
     public synchronized static AudioRecordFunc getInstance(){
 
@@ -102,6 +105,8 @@ public class AudioRecordFunc {
         FRAMES_PER_BUFFER = bufferSizeInBytes;
         sampledoublebuffer = new double[FRAMES_PER_BUFFER];
         volume = new double[bufferSizeInBytes];
+        Blue = new byte[bufferSizeInBytes];
+        Green = new byte[bufferSizeInBytes];
         fft = new DoubleFFT_1D(FRAMES_PER_BUFFER);
         audioRecord = new AudioRecord(AudioFileFunc.AUDIO_INPUT, AudioFileFunc.AUDIO_SAMPLE_RATE,
                 AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, bufferSizeInBytes);
@@ -119,7 +124,7 @@ public class AudioRecordFunc {
 
     private void processRecord(){
         int maxv=0,maxf=0;
-        byte[] buffer = new byte[bufferSizeInBytes];
+        buffer = new byte[bufferSizeInBytes];
         short[] sampleshortbuffer = new short[bufferSizeInBytes];
         //short[] sampleshortbuffer = new short[bufferSizeInBytes/2];
         FileOutputStream fOut = null;
@@ -137,13 +142,14 @@ public class AudioRecordFunc {
             //r是实际读取的数据长度，一般而言r会小于buffersize
 
             int r = audioRecord.read(buffer, 0, bufferSizeInBytes);
-            //if (cc%2 == 1) {
+            if (cc%2 == 1) {
                 //System.out.print("We are in cc.....\n" + String.valueOf(buffer[cc]) + " " + String.valueOf(buffer[cc+1]));
-                sampleshortbuffer[cc] = buffer[cc];
-                //sampleshortbuffer[cc/2] = (short) (sampleshortbuffer[cc-1] << 8);
+                //sampleshortbuffer[cc] = buffer[cc];
+                sampleshortbuffer[cc/2] =  (short) (((buffer[cc + 1] << 8) | buffer[cc + 0] & 0xff));
                 //sampleshortbuffer[cc/2] = (short) (sampleshortbuffer[cc] + buffer[cc]);
-                System.out.print(" " + String.valueOf(sampleshortbuffer[cc]) + "\n");
+                //System.out.print(" " + String.valueOf(sampleshortbuffer[cc]) + "\n");
                 long v = 0;
+                //System.out.print("sample0,1,2,3,4: " + String.valueOf(buffer[0])+ " "+String.valueOf(buffer[1])+" "+ String.valueOf(buffer[7]) + "\n");
                 // 将 buffer 内容取出，进行平方和运算
                 for (int i = 0; i < sampleshortbuffer.length; i++) {
                     v += sampleshortbuffer[i] * sampleshortbuffer[i];
@@ -151,13 +157,15 @@ public class AudioRecordFunc {
                 // 平方和除以数据总长度，得到音量大小。
                 double mean = v / (double) r;
                 convertToDouble(sampleshortbuffer, sampledoublebuffer);
-                fft.realForward(sampledoublebuffer);
-                if (count < bufferSizeInBytes) {
+                //fft.realForward(sampledoublebuffer);
+                if (count < bufferSizeInBytes ) {
                     volume[count] = 10 * Math.log10(mean);
+                    Blue[count] = buffer[0];
+                    Green[count] = buffer[1];
                     System.out.println("volume: " + String.valueOf(volume[count]) + " frequency:" + String.valueOf(sampledoublebuffer[count]) + " " + String.valueOf(count) + "\n");
                     count++;
                 }
-           // }
+            }
 
             if (AudioRecord.ERROR_INVALID_OPERATION != r && fOut!=null) {
                 try {
@@ -183,6 +191,7 @@ public class AudioRecordFunc {
             }*/
         }
         copyWaveFile(AudioName,NewAudioName);
+        buffer = null;
 
     }
     //Processing Here

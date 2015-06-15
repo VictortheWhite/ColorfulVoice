@@ -20,7 +20,6 @@ import android.graphics.Typeface;
 
 public class MainActivity extends Activity {
 
-    ImageView ImageViewToDraw;
     public static final int Width=500;
     public static final int Height=500;
     public static final int Stride=Height;  //Must be greater than Width
