@@ -27,7 +27,7 @@ public class MainActivity extends Activity {
     private Handler uiHandler;
     private Thread uiThread;
 
-    private DoubleFFT_1D fft;
+    //private DoubleFFT_1D fft;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

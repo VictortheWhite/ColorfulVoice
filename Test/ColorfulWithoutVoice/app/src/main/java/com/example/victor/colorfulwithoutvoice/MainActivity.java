@@ -1,11 +1,10 @@
 package com.example.victor.colorfulwithoutvoice;
 
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.Shape;
-import android.support.v7.app.ActionBarActivity;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
+import org.jtransforms.fft.DoubleFFT_1D;
+
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,11 +22,11 @@ public class MainActivity extends Activity {
     private TextView TimerText;
     private CountDownTimer RecordTimer;
     private final int RecordingMSecs=120000;
+    private static int State=-1;
+    private final static int FLAG_WAV = 0;
+
 
     static int i;
-
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,23 +52,23 @@ public class MainActivity extends Activity {
             }
         };
 
-        RecordButton.setOnClickListener(new Button.OnClickListener(){
-            public void onClick(View v){
-                if(IsRecording){
-                    IsRecording=false;
+        RecordButton.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                if (IsRecording) {
+                    IsRecording = false;
                     //changeButton
                     RecordButton.setBackgroundResource(R.drawable.play);
-                    //stopRecording();
+                    stopRecording();
 
                     //stop timer
                     RecordTimer.cancel();
                     //go to next activity
                     StartNextActivity();
-                }else{
-                    IsRecording=true;
+                } else {
+                    IsRecording = true;
                     //changeButton
                     RecordButton.setBackgroundResource(R.drawable.pause);
-                    //StartRecording;
+                    startRecording(FLAG_WAV);
                     RecordTimer.start();
                 }
             }
@@ -82,7 +81,6 @@ public class MainActivity extends Activity {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -115,6 +113,58 @@ public class MainActivity extends Activity {
         recordActivityIntent.putExtras(newBundle);
         startActivity(recordActivityIntent);
     }
+
+    private void startRecording(int Flag){
+        System.out.println("Recording\n");
+        if(State != -1){
+            return;
+        }
+        int Result = -1;
+        if (Flag == FLAG_WAV)
+        {
+            System.out.println("FLAG_WAVing!!!");
+            AudioRecordFunc Record_1 = AudioRecordFunc.getInstance();
+            Result = Record_1.startRecordAndFile();
+        }
+        System.out.println("Now out of FLAG_WAVing!!!");
+        /*
+        if(Result == ErrorCode.SUCCESS){
+            uiThread = new Thread();
+            new Thread(uiThread).start();
+            State = Flag;
+        }else{
+            Message msg = new Message();
+            Bundle b = new Bundle();// 存放数据
+            b.putInt("cmd",CMD_RECORDFAIL);
+            b.putInt("msg", Result);
+            msg.setData(b);
+            uiHandler.sendMessage(msg); // 向Handler发送消息,更新UI
+        }*/
+    }
+
+    private void stopRecording(){
+        if(State != -1){
+            if (State == FLAG_WAV){
+                AudioRecordFunc Record_1 = AudioRecordFunc.getInstance();
+                Record_1.stopRecordAndFile();
+            }
+            /*
+            if(uiThread != null){
+                //uiThread.stopThread();
+                uiThread = null;
+            }
+            if(uiHandler != null)
+                uiHandler.removeCallbacks(uiThread);
+            Message msg = new Message();
+            Bundle b = new Bundle();// 存放数据
+            b.putInt("cmd",CMD_STOP);
+            b.putInt("msg", State);
+            msg.setData(b);
+            uiHandler.sendMessageDelayed(msg,1000); // 向Handler发送消息,更新UI
+            State = -1;*/
+        }
+    }
+
 
 
 }

@@ -1,7 +1,7 @@
 /**
  * Created by hh on 2015/6/4.
  */
-package com.example.hh.test;
+package com.example.victor.colorfulwithoutvoice;
 
 import java.io.File;
 import java.io.FileInputStream;
